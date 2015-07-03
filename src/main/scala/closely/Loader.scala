@@ -20,6 +20,9 @@ class Loader extends ApplicationLoader {
         def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] =
           Future.successful(Results.Status(statusCode)(html.clientError(message)))
       }
-    val router = new _root_.router.Routes(httpErrorHandler, new Controller(wsClient), new Assets(httpErrorHandler))
+    val openStreetMap = new OpenStreetMap(wsClient, actorSystem)
+    val hostname = configuration.getString("hostname").getOrElse("localhost:9000")
+    val controller = new Controller(openStreetMap, hostname)
+    val router = new _root_.router.Routes(httpErrorHandler, controller, new Assets(httpErrorHandler))
   }.application
 }

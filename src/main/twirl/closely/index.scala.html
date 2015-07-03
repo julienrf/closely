@@ -1,14 +1,19 @@
+@(amenities: Seq[String], selected: Option[String])
 @layout {
-  <div style="display: table; width: 100%; height: 100%;">
-    <div style="display: table-row; height: 1%;">
-      <!--<label>What? <input type="text" name="amenity" placeholder="recycling" /></label>-->
-      <div style="display: table; max-width: 30em;">
-        <form style="display: table-cell;"><input style="width: 100%;" type="text" id="where" name="address" placeholder="Where?" /></form>
-        <span style="display: table-cell; width: 1%;"><button title="Use my current location" id="locate-me">&#8982;</button></span>
+  <div id="controls-and-map">
+    <div id="controls">
+      <select id="what">
+        @amenities.map { amenity =>
+          <option value="@amenity"@if(selected.contains(amenity)) { selected }>@amenity</option>
+        }
+      </select>
+      <div id="location">
+        <form id="where-wrapper"><input type="text" id="where" placeholder="Where?" /></form>
+        <span id="locate-me-wrapper"><button title="Use my current location" id="locate-me">&#8982;</button></span>
       </div>
     </div>
-    <div style="display: table-row;">
-      <div id="map" style="height: 100%;"></div>
+    <div id="map-wrapper">
+      <div id="map"></div>
     </div>
   </div>
 }

@@ -17,34 +17,47 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
       .then(qajax.toJSON);
   };
 
-  var knownPois = [];
+  var whatSelect = document.getElementById('what');
+  var whereInput = document.getElementById('where');
+  var locateMeBtn = document.getElementById('locate-me');
+
+  var state = {
+    knownPois: [],
+    amenity: whatSelect.value
+  };
 
   var map = L.map(document.getElementById('map'), { minZoom: 15 });
   L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
   map.on('locationfound', function (e) {
     map.setView(e.latlng, 17);
-    L.circleMarker(e.latlng).addTo(map);
+    L.circleMarker(e.latlng).addTo(map); // TODO Store the marker and modify it
   });
 
-  document.getElementById('locate-me')
+  locateMeBtn
     .addEventListener('click', function () {
       map.locate();
     });
 
-  var whereInput = document.getElementById('where');
+  whatSelect
+    .addEventListener('change', function (e) {
+      state.amenity = e.target.value;
+    });
+
   whereInput.form
     .addEventListener('submit', function (e) {
       e.preventDefault();
       ajax(routes.closely.Controller.geocode(whereInput.value))
         .then(function (point) {
           map.setView([point.lat, point.lon], 17);
+        }, function () {
+          alert('Unable to find the given location')
         });
     });
 
   map.on('moveend', function () {
     var bounds = map.getBounds();
-    ajax(routes.closely.Controller.search({
+    ajax(routes.closely.Controller.search(state.amenity, {
       north: bounds._northEast.lat,
       east: bounds._northEast.lng,
       south: bounds._southWest.lat,
@@ -52,9 +65,9 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
     }))
       .then(function (json) {
         json.elements
-          .filter(function (e) { return knownPois.indexOf(e.id) === -1 })
+          .filter(function (e) { return state.knownPois.indexOf(e.id) === -1 })
           .forEach(function (e) {
-            knownPois.push(e.id);
+            state.knownPois.push(e.id);
             L.marker([e.lat, e.lon])
               .bindPopup(el('ul')(
                 Object.keys(e.tags || {}).map(function (tag) {
