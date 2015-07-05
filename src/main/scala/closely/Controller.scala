@@ -2,19 +2,16 @@ package closely
 
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
-import play.api.mvc.{RequestHeader, Result, Action, Cookie}
+import play.api.mvc.{RequestHeader, Result, Action}
 import play.api.routing.JavaScriptReverseRouter
 import play.twirl.api.JavaScript
 
 class Controller(openStreetMap: OpenStreetMap, hostname: String) extends play.api.mvc.Controller {
 
-  val lastSearchCookie = "last-search"
-
   val index = Action.async { request =>
     for {
       amenities <- openStreetMap.tagInfos()
-      lastSearch = request.cookies.get(lastSearchCookie).map(_.value)
-    } yield Ok(html.index(/*amenities*/Seq("recycling", "drinking_water"), lastSearch))
+    } yield Ok(html.index(/*amenities*/Seq("recycling", "drinking_water", "picnic_table")))
   }
 
   def geocode(query: String) = Action.async {
@@ -26,7 +23,7 @@ class Controller(openStreetMap: OpenStreetMap, hostname: String) extends play.ap
 
   def search(amenity: String, box: BoundingBox) = Action.async {
     openStreetMap.search(amenity, box).map { json =>
-      Ok(json).withCookies(Cookie(lastSearchCookie, amenity))
+      Ok(json)
     }
   }
 

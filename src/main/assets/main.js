@@ -17,21 +17,35 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
       .then(qajax.toJSON);
   };
 
+  var readCookie = function (name) {
+    return decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent(name).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || null;
+  };
+
+  var writeCookie = function (name, value) {
+    document.cookie = encodeURIComponent(name) + '=' + encodeURIComponent(value);
+  };
+
   var whatSelect = document.getElementById('what');
   var whereInput = document.getElementById('where');
   var locateMeBtn = document.getElementById('locate-me');
 
-  var state = {
-    knownPois: [],
-    amenity: whatSelect.value
-  };
-
   var map = L.map(document.getElementById('map'), { minZoom: 15 });
   L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+  var state = {
+    knownPois: [], // Coordinates of already known pois
+    pois: null, // Layer showing pois
+    myLocation: null // Marker showing my location
+  };
+
   map.on('locationfound', function (e) {
     map.setView(e.latlng, 17);
-    L.circleMarker(e.latlng).addTo(map); // TODO Store the marker and modify it
+    if (state.myLocation === null) {
+      state.myLocation = L.circleMarker(e.latlng);
+      state.myLocation.addTo(map);
+    } else {
+      state.myLocation.setLatLng(e.latlng);
+    }
   });
 
   locateMeBtn
@@ -41,7 +55,8 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
 
   whatSelect
     .addEventListener('change', function (e) {
-      state.amenity = e.target.value;
+      writeCookie('what', e.target.value);
+      // TODO Remove pois and trigger search
     });
 
   whereInput.form
@@ -56,8 +71,10 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
     });
 
   map.on('moveend', function () {
+    writeCookie('location', [map.getCenter().lat, map.getCenter().lng, map.getZoom()].join('|'));
     var bounds = map.getBounds();
-    ajax(routes.closely.Controller.search(state.amenity, {
+    // TODO Use a cache to read cookie
+    ajax(routes.closely.Controller.search(readCookie('what'), {
       north: bounds._northEast.lat,
       east: bounds._northEast.lng,
       south: bounds._southWest.lat,
@@ -78,5 +95,18 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
           });
       })
   });
+
+  var readWhat = readCookie('what');
+  if (readWhat !== null) {
+    whatSelect.value = readWhat;
+  } else {
+    writeCookie('what', whatSelect.value);
+  }
+
+  var readLocation = readCookie('location');
+  if (readLocation !== null) {
+    var parts = readLocation.split('|');
+    map.setView(L.latLng(parts[0], parts[1]), parts[2]);
+  }
 
 });

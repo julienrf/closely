@@ -1,10 +1,10 @@
-@(amenities: Seq[String], selected: Option[String])
+@(amenities: Seq[String])
 @layout {
   <div id="controls-and-map">
     <div id="controls">
       <select id="what">
         @amenities.map { amenity =>
-          <option value="@amenity"@if(selected.contains(amenity)) { selected }>@amenity</option>
+          <option value="@amenity">@amenity</option>
         }
       </select>
       <div id="location">
