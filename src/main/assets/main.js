@@ -29,6 +29,8 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
   var whereInput = document.getElementById('where');
   var locateMeBtn = document.getElementById('locate-me');
 
+  L.Icon.Default.imagePath = '/assets/leaflet-0.7.3/images/'; // See https://github.com/Leaflet/Leaflet/issues/766
+
   var map = L.map(document.getElementById('map'), { minZoom: 15 });
   L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
