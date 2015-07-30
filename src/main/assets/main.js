@@ -17,6 +17,13 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
       .then(qajax.toJSON);
   };
 
+  var removeChildren = function (node) {
+    while (node.firstChild) {
+      node.removeChild(node.firstChild);
+    }
+  };
+
+  // TODO Use local storage instead
   var readCookie = function (name) {
     return decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent(name).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || null;
   };
@@ -25,20 +32,30 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
     document.cookie = encodeURIComponent(name) + '=' + encodeURIComponent(value);
   };
 
-  var whatSelect = document.getElementById('what');
+  var tagKeySelect = document.getElementById('tag-key');
+  var tagValueSelect = document.getElementById('tag-value');
   var whereInput = document.getElementById('where');
   var locateMeBtn = document.getElementById('locate-me');
-
-  L.Icon.Default.imagePath = '/assets/leaflet-0.7.3/images/'; // See https://github.com/Leaflet/Leaflet/issues/766
-
-  var map = L.map(document.getElementById('map'), { minZoom: 15 });
-  L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
   var state = {
     knownPois: [], // Coordinates of already known pois
     pois: null, // Layer showing pois
-    myLocation: null // Marker showing my location
+    myLocation: null, // Marker showing my location
+    tags: {} // TODO Put in local storage
   };
+
+  ajax(routes.closely.Closely.tags())
+    .then(function (json) {
+      state.tags = json;
+      removeChildren(tagKeySelect);
+      Object.keys(state.tags).forEach(function (key) { tagKeySelect.appendChild(el('option', { value: key })(key)) }) // TODO Manipulate the dom efficiently
+    });
+
+  L.Icon.Default.imagePath = '/assets/leaflet-0.7.3/images/'; // See https://github.com/Leaflet/Leaflet/issues/766
+
+  var map = L.map(document.getElementById('map'), { minZoom: 15, zoomControl: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  map.addControl(L.control.zoom({ position: 'bottomright' }));
 
   map.on('locationfound', function (e) {
     map.setView(e.latlng, 17);
@@ -55,16 +72,24 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
       map.locate();
     });
 
-  whatSelect
-    .addEventListener('change', function (e) {
-      writeCookie('what', e.target.value);
+  tagKeySelect
+    .addEventListener('change', function () {
+      writeCookie('tagKey', tagKeySelect.value);
+      removeChildren(tagValueSelect);
+      state.tags[tagKeySelect.value].forEach(function (v) { tagValueSelect.appendChild(el('option', { value: v })(v)) });
+    });
+
+  tagValueSelect
+    .addEventListener('change', function () {
+      writeCookie('tagValue', tagValueSelect.value);
+      state.knownPois = [];
       // TODO Remove pois and trigger search
     });
 
   whereInput.form
     .addEventListener('submit', function (e) {
       e.preventDefault();
-      ajax(routes.closely.Controller.geocode(whereInput.value))
+      ajax(routes.closely.Closely.geocode(whereInput.value))
         .then(function (point) {
           map.setView([point.lat, point.lon], 17);
         }, function () {
@@ -76,7 +101,7 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
     writeCookie('location', [map.getCenter().lat, map.getCenter().lng, map.getZoom()].join('|'));
     var bounds = map.getBounds();
     // TODO Use a cache to read cookie
-    ajax(routes.closely.Controller.search(readCookie('what'), {
+    ajax(routes.closely.Closely.search(readCookie('tagKey'), readCookie('tagValue'), {
       north: bounds._northEast.lat,
       east: bounds._northEast.lng,
       south: bounds._southWest.lat,
@@ -98,11 +123,12 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
       })
   });
 
-  var readWhat = readCookie('what');
-  if (readWhat !== null) {
-    whatSelect.value = readWhat;
+  // TODO Update this once I upgrade to local storage
+  var readTagValue = readCookie('tagValue');
+  if (readTagValue !== null) {
+    tagValueSelect.value = readTagValue;
   } else {
-    writeCookie('what', whatSelect.value);
+    writeCookie('tagValue', tagValueSelect.value);
   }
 
   var readLocation = readCookie('location');

@@ -1,6 +1,7 @@
-GET   /                   closely.Controller.index
-GET   /geocode            closely.Controller.geocode(q)
-GET   /search             closely.Controller.search(amenity: String, b: closely.BoundingBox)
+GET   /                   closely.Closely.index
+GET   /geocode            closely.Closely.geocode(q)
+GET   /search             closely.Closely.search(k: String, v: String, b: closely.BoundingBox)
+GET   /tags               closely.Closely.tags
 
-GET   /assets/routes.js   closely.Controller.javascriptRoutes
+GET   /assets/routes.js   closely.Closely.javascriptRoutes
 GET   /assets/*file       controllers.Assets.versioned(path = "/public", file: Asset)

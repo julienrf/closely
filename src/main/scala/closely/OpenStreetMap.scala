@@ -22,7 +22,7 @@ class OpenStreetMap(wsClient: WSClient, system: ActorSystem) {
 
   system.scheduler.schedule(0.second, 1.day, ref, Fetch)
 
-  def tagInfos(): Future[Seq[String]] = (ref ? Get).mapTo[Seq[String]]
+  def tags(): Future[Map[String, Seq[String]]] = (ref ? Get).mapTo[Map[String, Seq[String]]]
 
   def geocode(query: String): Future[Option[(Double, Double)]] =
     wsClient.url("http://nominatim.openstreetmap.org/search")
@@ -42,15 +42,15 @@ class OpenStreetMap(wsClient: WSClient, system: ActorSystem) {
       })
     }
 
-    def search(amenity: String, box: BoundingBox): Future[JsValue] =
+    def search(tagKey: String, tagValue: String, box: BoundingBox): Future[JsValue] =
       wsClient.url("http://overpass-api.de/api/interpreter")
         .withQueryString("data" ->
           s"""
              [out:json][timeout:20];
              (
-               node["amenity"="$amenity"](${box.south},${box.west},${box.north},${box.east});
-               way["amenity"="$amenity"](${box.south},${box.west},${box.north},${box.east});
-               relation["amenity"="$amenity"](${box.south},${box.west},${box.north},${box.east});
+               node["$tagKey"="$tagValue"](${box.south},${box.west},${box.north},${box.east});
+               way["$tagKey"="$tagValue"](${box.south},${box.west},${box.north},${box.east});
+               relation["$tagKey"="$tagValue"](${box.south},${box.west},${box.north},${box.east});
              );
              out body;
             """)
@@ -66,30 +66,41 @@ class TagInfoActor(wsClient: WSClient) extends Actor {
   import TagInfoActor._
   import akka.pattern.pipe
 
-  var tags = Seq.empty[String]
+  var tags = Map.empty[String, Seq[String]]
 
   def receive: Receive = {
     case Get =>
       sender() ! tags
     case Fetch =>
-      wsClient
-        .url("http://taginfo.openstreetmap.org/api/4/key/values")
-        .withQueryString("key" -> "amenity", "sortname" -> "value")
-        .get()
-        .flatMap { response =>
-        Future.fromTry(Try(response.json).flatMap { json =>
-          json.validate(
-            (__ \ "data").read(
-              Reads.seq(
-                (__ \ "value").read[String]
-              )
-            )
-          ) match {
-            case JsSuccess(newTags, _) => Success(Update(newTags))
-            case JsError(errors) => Failure(new Exception("Unable to decode JSON response"))
+      def fetchValues(key: String): Future[(String, Seq[String])] =
+        wsClient
+          .url("http://taginfo.openstreetmap.org/api/4/key/values")
+          .withQueryString("key" -> key)
+          .get()
+          .flatMap { response =>
+            Future.fromTry(Try(response.json).flatMap { json =>
+              json.validate(
+                (__ \ "data").read(
+                  Reads.seq(
+                    (
+                      (__ \ "value").read[String] ~
+                      (__ \ "count").read[Int]
+                    ).tupled
+                  )
+                )
+              ) match {
+                case JsSuccess(values, _) => Success(key -> values.collect { case (v, n) if n > 1000 => v }.sorted)
+                case JsError(errors) => Failure(new Exception("Unable to decode JSON response"))
+              }
+            })
           }
-        }).pipeTo(self)
-      }
+
+      val keys = Seq("amenity", "bicycle", "emergency", "historic", "leisure", "natural", "tourism", "wheelchair"/*, "waterway"*/)
+
+      Future.sequence(keys.map(fetchValues))
+        .map(tags => Update(tags.toMap))
+        .pipeTo(self)
+
     case Update(newTags) =>
       tags = newTags
   }
@@ -98,6 +109,6 @@ class TagInfoActor(wsClient: WSClient) extends Actor {
 object TagInfoActor {
   case object Get
   case object Fetch
-  case class Update(tags: Seq[String])
+  case class Update(tags: Map[String, Seq[String]])
 }
 

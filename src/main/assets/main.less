@@ -8,20 +8,29 @@ html, body {
   margin: 0;
 }
 
-#controls-and-map {
-  display: table;
-  width: 100%;
+// --- Map
+
+#map {
   height: 100%;
 }
 
-#controls {
-  display: table-row;
-  height: 1%;
+// --- Controls
+
+#controls-and-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.4em;
+  background-color: white;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+  display: table;
 }
 
-#what {
-//  width: 100%;
+#controls {
+  display: table-cell;
 }
+
+// --- Location
 
 #location {
   display: table;
@@ -41,10 +50,23 @@ html, body {
   width: 1%;
 }
 
-#map-wrapper {
-  display: table-row;
+// --- Tag
+
+#tag {
+  display: table;
 }
 
-#map {
-  height: 100%;
+#tag-key {
+  display: table-cell;
+}
+
+#tag-value {
+  display: table-cell;
+}
+
+// Handle
+
+#handle {
+  display: table-cell;
+  position: relative;
 }

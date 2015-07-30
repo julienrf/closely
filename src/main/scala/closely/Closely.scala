@@ -6,12 +6,19 @@ import play.api.mvc.{RequestHeader, Result, Action}
 import play.api.routing.JavaScriptReverseRouter
 import play.twirl.api.JavaScript
 
-class Controller(openStreetMap: OpenStreetMap, hostname: String) extends play.api.mvc.Controller {
+class Closely(openStreetMap: OpenStreetMap, hostname: String) extends play.api.mvc.Controller {
 
-  val index = Action.async { request =>
-    for {
-      amenities <- openStreetMap.tagInfos()
-    } yield Ok(html.index(/*amenities*/Seq("recycling", "drinking_water", "picnic_table")))
+  val index = {
+    val htmlContent = html.index()
+    Action { request =>
+      taggedResult(request, htmlContent.body.hashCode.toString) {
+        Ok(htmlContent)
+      }
+    }
+  }
+
+  def tags = Action.async {
+    openStreetMap.tags().map(ts => Ok(Json.toJson(ts))) // TODO Cache
   }
 
   def geocode(query: String) = Action.async {
@@ -21,8 +28,8 @@ class Controller(openStreetMap: OpenStreetMap, hostname: String) extends play.ap
     }
   }
 
-  def search(amenity: String, box: BoundingBox) = Action.async {
-    openStreetMap.search(amenity, box).map { json =>
+  def search(tagKey: String, tagValue: String, box: BoundingBox) = Action.async {
+    openStreetMap.search(tagKey, tagValue, box).map { json =>
       Ok(json)
     }
   }
@@ -30,13 +37,13 @@ class Controller(openStreetMap: OpenStreetMap, hostname: String) extends play.ap
   val javascriptRoutes = {
     val router =
       JavaScriptReverseRouter("routes", None, hostname,
-        routes.javascript.Controller.search,
-        routes.javascript.Controller.geocode
+        routes.javascript.Closely.search,
+        routes.javascript.Closely.geocode,
+        routes.javascript.Closely.tags
       )
-    val routerTag = router.body.hashCode.toString
 
     Action { request =>
-      taggedResult(request, routerTag) {
+      taggedResult(request, router.body.hashCode.toString) {
         Ok(JavaScript(s"""define(function () { ${router.body}; return routes })"""))
       }
     }

@@ -22,7 +22,7 @@ class Loader extends ApplicationLoader {
       }
     val openStreetMap = new OpenStreetMap(wsClient, actorSystem)
     val hostname = configuration.getString("hostname").getOrElse("localhost:9000")
-    val controller = new Controller(openStreetMap, hostname)
+    val controller = new Closely(openStreetMap, hostname)
     val router = new _root_.router.Routes(httpErrorHandler, controller, new Assets(httpErrorHandler))
   }.application
 }
