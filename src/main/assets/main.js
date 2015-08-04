@@ -6,7 +6,7 @@ require.config({
   }
 });
 
-require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
+require(['leaflet', 'routes', 'qajax', 'el', 'option'], function (L, routes, qajax, el, option) {
 
   var ajax = function (endpoint, opts) {
     opts = opts || {};
@@ -23,33 +23,43 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
     }
   };
 
-  // TODO Use local storage instead
-  var readCookie = function (name) {
-    return decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent(name).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || null;
+  var persistedState =
+    option.map(window.localStorage.getItem('state'), function (_) { return JSON.parse(_) });
+
+  var state = {
+    knownPois: [], // Coordinates of already known pois
+    myLocation: null, // Marker showing my location
+    selectedKey: option.map(persistedState, function (_) { return _.selectedKey }),
+    selectedValue: option.map(persistedState, function (_) { return _.selectedValue }),
+    locationAndZoom: option.map(persistedState, function (_) { return _.locationAndZoom }),
+    tags: option.map(window.localStorage.getItem('tags'), function (_) { return JSON.parse(_) })
   };
 
-  var writeCookie = function (name, value) {
-    document.cookie = encodeURIComponent(name) + '=' + encodeURIComponent(value);
-  };
+  window.addEventListener('beforeunload', function () {
+    window.localStorage.setItem('state', JSON.stringify({
+      selectedKey: state.selectedKey,
+      selectedValue: state.selectedValue,
+      locationAndZoom: state.locationAndZoom
+    }));
+  });
 
   var tagKeySelect = document.getElementById('tag-key');
   var tagValueSelect = document.getElementById('tag-value');
   var whereInput = document.getElementById('where');
   var locateMeBtn = document.getElementById('locate-me');
 
-  var state = {
-    knownPois: [], // Coordinates of already known pois
-    pois: null, // Layer showing pois
-    myLocation: null, // Marker showing my location
-    tags: {} // TODO Put in local storage
-  };
-
-  ajax(routes.closely.Closely.tags())
-    .then(function (json) {
-      state.tags = json;
-      removeChildren(tagKeySelect);
-      Object.keys(state.tags).forEach(function (key) { tagKeySelect.appendChild(el('option', { value: key })(key)) }) // TODO Manipulate the dom efficiently
-    });
+  if (state.tags === null) {
+    ajax(routes.closely.Closely.tags())
+      .then(function (json) {
+        state.tags = json;
+        window.localStorage.setItem('tags', JSON.stringify(state.tags));
+        removeChildren(tagKeySelect);
+        Object.keys(state.tags).forEach(function (key) { tagKeySelect.appendChild(el('option', { value: key })(key)) }) // TODO Manipulate the dom efficiently
+      });
+  } else {
+    removeChildren(tagKeySelect);
+    Object.keys(state.tags).forEach(function (key) { tagKeySelect.appendChild(el('option', { value: key })(key)) }) // TODO Manipulate the dom efficiently
+  }
 
   L.Icon.Default.imagePath = '/assets/leaflet-0.7.3/images/'; // See https://github.com/Leaflet/Leaflet/issues/766
 
@@ -74,14 +84,14 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
 
   tagKeySelect
     .addEventListener('change', function () {
-      writeCookie('tagKey', tagKeySelect.value);
+      state.selectedKey = tagKeySelect.value;
       removeChildren(tagValueSelect);
       state.tags[tagKeySelect.value].forEach(function (v) { tagValueSelect.appendChild(el('option', { value: v })(v)) });
     });
 
   tagValueSelect
     .addEventListener('change', function () {
-      writeCookie('tagValue', tagValueSelect.value);
+      state.selectedKey = tagValueSelect.value;
       state.knownPois = [];
       // TODO Remove pois and trigger search
     });
@@ -98,10 +108,14 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
     });
 
   map.on('moveend', function () {
-    writeCookie('location', [map.getCenter().lat, map.getCenter().lng, map.getZoom()].join('|'));
+    state.locationAndZoom = {
+      lat: map.getCenter().lat,
+      lng: map.getCenter().lng,
+      zoom: map.getZoom()
+    };
     var bounds = map.getBounds();
     // TODO Use a cache to read cookie
-    ajax(routes.closely.Closely.search(readCookie('tagKey'), readCookie('tagValue'), {
+    ajax(routes.closely.Closely.search(state.selectedKey, state.selectedValue, {
       north: bounds._northEast.lat,
       east: bounds._northEast.lng,
       south: bounds._southWest.lat,
@@ -109,7 +123,7 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
     }))
       .then(function (json) {
         json.elements
-          .filter(function (e) { return state.knownPois.indexOf(e.id) === -1 })
+          .filter(function (e) { return e.type === 'node' && state.knownPois.indexOf(e.id) === -1 })
           .forEach(function (e) {
             state.knownPois.push(e.id);
             L.marker([e.lat, e.lon])
@@ -123,18 +137,15 @@ require(['leaflet', 'routes', 'qajax', 'el'], function (L, routes, qajax, el) {
       })
   });
 
-  // TODO Update this once I upgrade to local storage
-  var readTagValue = readCookie('tagValue');
-  if (readTagValue !== null) {
-    tagValueSelect.value = readTagValue;
-  } else {
-    writeCookie('tagValue', tagValueSelect.value);
+  if (state.selectedKey !== null) {
+    tagKeySelect.value = state.selectedKey;
+  }
+  if (state.selectedValue !== null) {
+    tagValueSelect.value = state.selectedValue;
   }
 
-  var readLocation = readCookie('location');
-  if (readLocation !== null) {
-    var parts = readLocation.split('|');
-    map.setView(L.latLng(parts[0], parts[1]), parts[2]);
+  if (state.locationAndZoom !== null) {
+    map.setView(L.latLng(state.locationAndZoom.lat, state.locationAndZoom.lng), state.locationAndZoom.zoom);
   }
 
 });
