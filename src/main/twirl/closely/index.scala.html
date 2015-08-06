@@ -1,19 +1,9 @@
 @()
 @layout {
-  <div id="map"></div>
-  <div id="controls-and-handle">
-    <div id="controls">
-      <div id="location">
-        <form id="where-wrapper"><input type="text" id="where" placeholder="Search for a location" /></form>
-        <span id="locate-me-wrapper"><button title="Use my current location" id="locate-me">&#8982;</button></span>
-      </div>
-      <div id="tag">
-        <select id="tag-key" title="Tag key">
-        </select>
-        <select id="tag-value" title="Tag value">
-        </select>
-      </div>
-    </div>
-    <div id="handle"></div>
-  </div>
+    <script src="@routes.Assets.versioned("require.js")" defer></script>
+    <script src="@routes.Assets.versioned("main.js")" defer></script>
+    <link rel="stylesheet" href="@routes.Assets.versioned("leaflet-0.7.3/leaflet.css")"/>
+    <link rel="stylesheet" href="@routes.Assets.versioned("main.css")"/>
+} {
+
 }

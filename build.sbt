@@ -19,3 +19,5 @@ herokuProcessTypes in Compile := Map(
 )
 
 RjsKeys.paths += "routes" -> ("routes", "empty:")
+
+excludeDependencies += SbtExclusionRule("com.google.inject.extensions", "guice-assistedinject")
