@@ -10,7 +10,7 @@ routesGenerator := InjectedRoutesGenerator
 
 pipelineStages := Seq(rjs, digest, gzip)
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
 herokuAppName in Compile := "closely"
 
@@ -19,5 +19,3 @@ herokuProcessTypes in Compile := Map(
 )
 
 RjsKeys.paths += "routes" -> ("routes", "empty:")
-
-excludeDependencies += SbtExclusionRule("com.google.inject.extensions", "guice-assistedinject")

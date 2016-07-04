@@ -2,15 +2,15 @@ package closely
 
 import controllers.Assets
 import play.api.http.HttpErrorHandler
-import play.api.libs.ws.ning.NingWSComponents
 import play.api.mvc._
-import play.api.{Logger, BuiltInComponentsFromContext, Application, ApplicationLoader}
+import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext, Logger}
 import play.api.ApplicationLoader.Context
+import play.api.libs.ws.ahc.AhcWSComponents
 
 import scala.concurrent.Future
 
 class Loader extends ApplicationLoader {
-  def load(context: Context): Application = new BuiltInComponentsFromContext(context) with NingWSComponents {
+  def load(context: Context): Application = new BuiltInComponentsFromContext(context) with AhcWSComponents {
     override lazy val httpErrorHandler =
       new HttpErrorHandler with Rendering with AcceptExtractors with Results {
         def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {

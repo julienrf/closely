@@ -33,7 +33,7 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
   var ui = Ui(state);
 
   // TODO handle expiration
-  if (state.tags === null) {
+  if (state.tags === null || Object.keys(state.tags).length === 0) {
     ajax(routes.closely.Closely.tags(), function (json) {
       state.tags = json;
       window.localStorage.setItem('tags', JSON.stringify(state.tags));
