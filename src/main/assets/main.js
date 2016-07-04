@@ -1,7 +1,7 @@
 require.config({
   baseUrl: '/assets',
   paths: {
-    'leaflet': 'leaflet-0.7.3/leaflet'
+    'leaflet': 'leaflet-0.7.7/leaflet'
   }
 });
 
@@ -60,7 +60,7 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
       triggerSearch();
     });
 
-  L.Icon.Default.imagePath = '/assets/leaflet-0.7.3/images/'; // See https://github.com/Leaflet/Leaflet/issues/766
+  L.Icon.Default.imagePath = '/assets/leaflet-0.7.7/images/'; // See https://github.com/Leaflet/Leaflet/issues/766
 
   var map = L.map(ui.map, { minZoom: 15, zoomControl: false });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -126,7 +126,11 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
     );
   };
 
-  map.on('moveend', triggerSearch);
+  map.on('moveend', function () {
+    if (state.selectedKey !== null && state.selectedValue !== null) {
+      triggerSearch();
+    }
+  });
 
   if (state.locationAndZoom !== null) {
     map.setView(L.latLng(state.locationAndZoom.lat, state.locationAndZoom.lng), state.locationAndZoom.zoom);
@@ -138,5 +142,6 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
   });
 
   document.body.appendChild(ui.root);
+  map.invalidateSize();
 
 });

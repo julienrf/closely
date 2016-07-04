@@ -1,14 +1,14 @@
 package closely
 
-import akka.actor.{Props, ActorSystem, Actor}
+import akka.actor.{Actor, ActorSystem, Props}
 import akka.util.Timeout
+import play.api.Logger
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
-
 import play.api.libs.functional.syntax._
 
 class OpenStreetMap(wsClient: WSClient, system: ActorSystem) {
@@ -55,6 +55,10 @@ class OpenStreetMap(wsClient: WSClient, system: ActorSystem) {
              out body;
             """)
         .get()
+        .map { response =>
+          Logger.debug(s"Overpass response: ${response.status} ${response.body}")
+          response
+        }
         .filter(_.status == 200)
         .flatMap { response =>
           Future.fromTry(Try(response.json))
