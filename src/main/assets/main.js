@@ -1,7 +1,7 @@
 require.config({
   baseUrl: '/assets',
   paths: {
-    'leaflet': 'leaflet-0.7.7/leaflet'
+    'leaflet': 'leaflet-1.3.4/leaflet'
   }
 });
 
@@ -60,7 +60,7 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
       triggerSearch();
     });
 
-  L.Icon.Default.imagePath = '/assets/leaflet-0.7.7/images/'; // See https://github.com/Leaflet/Leaflet/issues/766
+  L.Icon.Default.imagePath = '/assets/leaflet-1.3.4/images/'; // See https://github.com/Leaflet/Leaflet/issues/766
 
   var map = L.map(ui.map, { minZoom: 15, zoomControl: false });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -77,9 +77,14 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
     }
   });
 
+  map.on('locationerror', function (e) {
+    alert('Unable to locate the device. ' + e.message);
+    console.error(e);
+  });
+
   ui.locateMeBtn
     .addEventListener('click', function () {
-      map.locate();
+      map.locate({ timeout: 30 * 1000 });
     });
 
   ui.whereInput.form
