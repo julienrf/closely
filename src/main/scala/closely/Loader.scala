@@ -6,11 +6,14 @@ import play.api.mvc._
 import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext, Logger}
 import play.api.ApplicationLoader.Context
 import play.api.libs.ws.ahc.AhcWSComponents
+import play.closely.RedirectHttpsComponents
 
 import scala.concurrent.Future
 
 class Loader extends ApplicationLoader {
-  def load(context: Context): Application = new BuiltInComponentsFromContext(context) with AhcWSComponents {
+  def load(context: Context): Application = new BuiltInComponentsFromContext(context) with AhcWSComponents with RedirectHttpsComponents {
+    def executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    override lazy val httpFilters: Seq[EssentialFilter] = redirectHttpsFilter :: Nil
     override lazy val httpErrorHandler =
       new HttpErrorHandler with Rendering with AcceptExtractors with Results {
         def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
