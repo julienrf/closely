@@ -17,10 +17,6 @@ class Closely(openStreetMap: OpenStreetMap, hostname: String) extends play.api.m
     }
   }
 
-  def tags = Action.async {
-    openStreetMap.tags().map(ts => Ok(Json.toJson(ts))) // TODO Cache
-  }
-
   def geocode(query: String) = Action.async {
     openStreetMap.geocode(query).map {
       case Some((lat, lon)) => Ok(Json.obj("lat" -> lat, "lon" -> lon))
@@ -38,8 +34,7 @@ class Closely(openStreetMap: OpenStreetMap, hostname: String) extends play.api.m
     val router =
       JavaScriptReverseRouter("routes", None, hostname,
         routes.javascript.Closely.search,
-        routes.javascript.Closely.geocode,
-        routes.javascript.Closely.tags
+        routes.javascript.Closely.geocode
       )
 
     Action { request =>

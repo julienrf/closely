@@ -10,21 +10,66 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
   var persistedState =
     option.map(window.localStorage.getItem('state'), function (_) { return JSON.parse(_) });
 
+  var things = {
+    "drinking_water": {
+      "key": "amenity",
+      "value": "drinking_water",
+      "label": "Drinking water"
+    },
+    "recycling": {
+      "key": "amenity",
+      "value": "recycling",
+      "label": "Recycling"
+    },
+    "waste_basket": {
+      "key": "amenity",
+      "value": "waste_basket",
+      "label": "Waste basket"
+    },
+    "toilets": {
+      "key": "amenity",
+      "value": "toilets",
+      "label": "Toilets"
+    },
+    "bench": {
+      "key": "amenity",
+      "value": "bench",
+      "label": "Bench"
+    },
+    "picnic_table": {
+      "key": "leisure",
+      "value": "picnic_table",
+      "label": "Picnic table"
+    },
+    "picnic_site": {
+      "key": "tourism",
+      "value": "picnic_site",
+      "label": "Picnic site"
+    },
+    "pharmacy": {
+      "key": "amenity",
+      "value": "pharmacy",
+      "label": "Pharmacy"
+    },
+    "police": {
+      "key": "amenity",
+      "value": "police",
+      "label": "Police"
+    }
+  };
+
   var state = {
     knownPois: [], // Coordinates of already known pois
     poisLayer: L.layerGroup(), // Layer of pois
     myLocation: null, // Marker showing my location
-    selectedKey: option.map(persistedState, function (_) { return _.selectedKey }),
-    selectedValue: option.map(persistedState, function (_) { return _.selectedValue }),
+    selectedThing: option.getOrElse(option.map(persistedState, function (_) { return _.selectedThing }), function () { 'picnic_site' }),
     locationAndZoom: option.map(persistedState, function (_) { return _.locationAndZoom }),
-    controlsAreVisible: option.fold(persistedState, function () { return true }, function (_) { return _.controlsAreVisible }),
-    tags: option.map(window.localStorage.getItem('tags'), function (_) { return JSON.parse(_) }) // FIXME load them lazily
+    controlsAreVisible: option.fold(persistedState, function () { return true }, function (_) { return _.controlsAreVisible })
   };
 
   window.addEventListener('beforeunload', function () {
     window.localStorage.setItem('state', JSON.stringify({
-      selectedKey: state.selectedKey,
-      selectedValue: state.selectedValue,
+      selectedThing: state.selectedThing,
       locationAndZoom: state.locationAndZoom,
       controlsAreVisible: state.controlsAreVisible
     }));
@@ -32,29 +77,11 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
 
   var ui = Ui(state);
 
-  // TODO handle expiration
-  if (state.tags === null || Object.keys(state.tags).length === 0) {
-    ajax(routes.closely.Closely.tags(), function (json) {
-      state.tags = json;
-      window.localStorage.setItem('tags', JSON.stringify(state.tags));
-      ui.update.keySelect(state);
-      ui.update.valueSelect(state);
-    });
-  } else {
-    ui.update.keySelect(state);
-    ui.update.valueSelect(state);
-  }
+  ui.update.thingSelect(state, things);
 
-  ui.keySelect
+  ui.thingSelect
     .addEventListener('change', function () {
-      state.selectedKey = ui.keySelect.value;
-      state.selectedValue = null;
-      ui.update.valueSelect(state);
-    });
-
-  ui.valueSelect
-    .addEventListener('change', function () {
-      state.selectedValue = ui.valueSelect.value;
+      state.selectedThing = ui.thingSelect.value;
       state.knownPois = [];
       state.poisLayer.clearLayers();
       triggerSearch();
@@ -62,7 +89,7 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
 
   L.Icon.Default.imagePath = '/assets/leaflet-1.3.4/images/'; // See https://github.com/Leaflet/Leaflet/issues/766
 
-  var map = L.map(ui.map, { minZoom: 15, zoomControl: false });
+  var map = L.map(ui.map, { minZoom: 14, zoomControl: false });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
   map.addControl(L.control.zoom({ position: 'bottomright' }));
   state.poisLayer.addTo(map);
@@ -108,7 +135,7 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
     };
     var bounds = map.getBounds();
     ajax(
-      routes.closely.Closely.search(state.selectedKey, state.selectedValue, {
+      routes.closely.Closely.search(things[state.selectedThing].key, things[state.selectedThing].value, {
         north: bounds._northEast.lat,
         east: bounds._northEast.lng,
         south: bounds._southWest.lat,
@@ -132,9 +159,7 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
   };
 
   map.on('moveend', function () {
-    if (state.selectedKey !== null && state.selectedValue !== null) {
-      triggerSearch();
-    }
+    triggerSearch();
   });
 
   if (state.locationAndZoom !== null) {

@@ -1,7 +1,6 @@
 package closely
 
-import akka.actor.{Actor, ActorSystem, Props}
-import akka.util.Timeout
+import akka.actor.{Actor, ActorSystem}
 import play.api.Logger
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
@@ -12,17 +11,6 @@ import scala.util.{Failure, Success, Try}
 import play.api.libs.functional.syntax._
 
 class OpenStreetMap(wsClient: WSClient, system: ActorSystem) {
-  import TagInfoActor._
-  import akka.pattern.ask
-  import scala.concurrent.duration.DurationInt
-
-  implicit val timeout = Timeout(1.second)
-
-  val ref = system.actorOf(Props(new TagInfoActor(wsClient)))
-
-  system.scheduler.schedule(0.second, 1.day, ref, Fetch)
-
-  def tags(): Future[Map[String, Seq[String]]] = (ref ? Get).mapTo[Map[String, Seq[String]]]
 
   def geocode(query: String): Future[Option[(Double, Double)]] =
     wsClient.url("http://nominatim.openstreetmap.org/search")
@@ -66,6 +54,8 @@ class OpenStreetMap(wsClient: WSClient, system: ActorSystem) {
 
 }
 
+// Not used anymore
+// But might be useful later…
 class TagInfoActor(wsClient: WSClient) extends Actor {
   import TagInfoActor._
   import akka.pattern.pipe
