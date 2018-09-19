@@ -62,7 +62,7 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
     knownPois: [], // Coordinates of already known pois
     poisLayer: L.layerGroup(), // Layer of pois
     myLocation: null, // Marker showing my location
-    selectedThing: option.getOrElse(option.map(persistedState, function (_) { return _.selectedThing }), function () { 'picnic_site' }),
+    selectedThing: option.getOrElse(option.map(persistedState, function (_) { return _.selectedThing }), function () { return 'picnic_site' }),
     locationAndZoom: option.map(persistedState, function (_) { return _.locationAndZoom }),
     controlsAreVisible: option.fold(persistedState, function () { return true }, function (_) { return _.controlsAreVisible })
   };

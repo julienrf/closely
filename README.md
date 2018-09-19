@@ -1,6 +1,16 @@
 # closely
 
-[Try it live](http://closely.herokuapp.com).
+[Try it live](https://closely.herokuapp.com).
+
+## Run from source
+
+Install [sbt](https://scala-sbt.org)
+
+~~~
+$ sbt run
+~~~
+
+Browse http://localhost:9000.
 
 ## License
 
