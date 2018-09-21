@@ -7,8 +7,15 @@ require.config({
 
 require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes, option, Ui, ajax, el) {
 
+  // Increment the version each time the locally stored state’s schema changes
+  var localStateVersion = 1;
+
   var persistedState =
-    option.map(window.localStorage.getItem('state'), function (_) { return JSON.parse(_) });
+    option.map(window.localStorage.getItem('state'), function (_) {
+      var parsed = JSON.parse(_);
+      if (parsed.version === localStateVersion) return parsed;
+      else return null;
+    });
 
   var things = {
     "drinking_water": {
@@ -71,7 +78,8 @@ require(['leaflet', 'routes', 'option', 'ui', 'ajax', 'el'], function (L, routes
     window.localStorage.setItem('state', JSON.stringify({
       selectedThing: state.selectedThing,
       locationAndZoom: state.locationAndZoom,
-      controlsAreVisible: state.controlsAreVisible
+      controlsAreVisible: state.controlsAreVisible,
+      version: localStateVersion
     }));
   });
 
