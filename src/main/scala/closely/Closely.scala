@@ -50,4 +50,23 @@ class Closely(openStreetMap: OpenStreetMap, hostname: String) extends play.api.m
       case _ => result.withHeaders(ETAG -> tag)
     }
 
+  val webmanifest = {
+    val contents = Json.obj(
+      "name"             -> "Closely",
+      "background_color" -> "white",
+      "display"          -> "standalone",
+      "start_url"        -> closely.routes.Closely.index().url,
+      "icons"            -> Json.arr(
+        Json.obj(
+          "src"   -> controllers.routes.Assets.versioned("icon.png").url,
+          "sizes" -> "48x48",
+          "type"  -> "image/png"
+        )
+      )
+    )
+    Action {
+      Ok(contents)
+    }
+  }
+
 }
