@@ -13,15 +13,15 @@ The application looks like the following:
 On the top left panel you can:
 
 - Look for a location to display (e.g. “Paris”),
-- Use your current location,
+- Or use your current location,
 - Hide the panel,
-- Select the kind of amenity to show on the map.
+- Select the kind of amenities to show on the map.
 
 On mobile devices, I recommend using the “add to home screen” feature (house with a plus button):
 
 ![a2hs](add-to-home-screen.png)
 
-Clicking on the hous with a plus button will add a shortcut to the web app on your home screen,
+Clicking on the house with a plus button will add a shortcut to the web app on your home screen,
 for quicker access.
 
 ## Contributing

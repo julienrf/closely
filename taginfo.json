@@ -1,0 +1,59 @@
+{
+  "data_format": 1,
+  "data_url": "https://github.com/julienrf/closely/blob/master/taginfo.json",
+  "project": {
+    "name": "Closely",
+    "description": "Find useful amenities close to you",
+    "project_url": "https://closely.herokuapp.com",
+    "doc_url": "https://github.com/julienrf/closely",
+    "contact_name": "Julien Richard-Foy",
+    "contact_email": "julien@richard-foy.fr"
+  },
+  "tags": [
+    {
+      "key": "amenity",
+      "value": "drinking_water",
+      "object_types": ["node"]
+    },
+    {
+      "key": "amenity",
+      "value": "recycling",
+      "object_types": ["node"]
+    },
+    {
+      "key": "amenity",
+      "value": "waste_basket",
+      "object_types": ["node"]
+    },
+    {
+      "key": "amenity",
+      "value": "toilets",
+      "object_types": ["node"]
+    },
+    {
+      "key": "amenity",
+      "value": "bench",
+      "object_types": ["node"]
+    },
+    {
+      "key": "leisure",
+      "value": "picnic_table",
+      "object_types": ["node"]
+    },
+    {
+      "key": "tourism",
+      "value": "picnic_site",
+      "object_types": ["node"]
+    },
+    {
+      "key": "amenity",
+      "value": "pharmacy",
+      "object_types": ["node"]
+    },
+    {
+      "key": "amenity",
+      "value": "police",
+      "object_types": ["node"]
+    }
+  ]
+}
