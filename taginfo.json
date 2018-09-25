@@ -6,6 +6,7 @@
     "description": "Find useful amenities close to you",
     "project_url": "https://closely.herokuapp.com",
     "doc_url": "https://github.com/julienrf/closely",
+    "icon_url": "https://raw.githubusercontent.com/julienrf/closely/master/src/main/assets/icon.png",
     "contact_name": "Julien Richard-Foy",
     "contact_email": "julien@richard-foy.fr"
   },
